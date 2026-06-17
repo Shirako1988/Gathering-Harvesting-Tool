@@ -1,0 +1,666 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gathering & Harvesting Tool — d100 Balanced</title>
+  <style>
+    :root{
+      --bg:#0f1724;--card:#0b1220;--muted:#9aa6b2;--accent:#7dd3fc;--good:#34d399;--bad:#fb7185;--warn:#f59e0b;--legendary:#fbbf24;--glass:rgba(255,255,255,0.03)
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;color:#e6eef6;background:linear-gradient(180deg,#071022 0%,#07182a 60%)}
+    .wrap{max-width:1160px;margin:28px auto;padding:20px;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));box-shadow:0 6px 30px rgba(2,6,23,0.6)}
+    header{display:flex;align-items:center;gap:16px;margin-bottom:14px}
+    h1{margin:0;font-size:21px}
+    h3{margin-top:0}
+    h4{margin:10px 0 8px 0}
+    p.lead{margin:0;color:var(--muted);font-size:13px}
+    .grid{display:grid;grid-template-columns:1fr 400px;gap:16px}
+    .card{background:var(--card);border-radius:10px;padding:12px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.02)}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+    select,input,button{width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:rgba(255,255,255,0.08);color:inherit;font-size:13px}
+    select option{background:var(--card);color:#e6eef6}
+    .row{display:flex;gap:8px;align-items:end}
+    .row > div{flex:1}
+    .small{font-size:12px;color:var(--muted)}
+    .muted{color:var(--muted)}
+    .controls{display:flex;flex-direction:column;gap:10px}
+    .actions{display:flex;gap:8px}
+    button.primary{background:linear-gradient(90deg,var(--accent),#60a5fa);color:#042029;border:none;box-shadow:0 6px 18px rgba(45,212,255,0.06);cursor:pointer;font-weight:700}
+    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.05);color:var(--muted);cursor:pointer}
+    button.success{background:linear-gradient(90deg,var(--good),#10b981);color:#042029;border:none;cursor:pointer;font-weight:700}
+    .log{height:420px;overflow:auto;white-space:pre-wrap;padding:8px;border-radius:8px;background:linear-gradient(180deg,rgba(255,255,255,0.01),rgba(255,255,255,0.015));font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-size:13px}
+    table{width:100%;border-collapse:collapse;font-size:13px;margin:10px 0}
+    td,th{padding:6px 8px;border-bottom:1px dashed rgba(255,255,255,0.04);vertical-align:top}
+    th{color:var(--muted);text-align:left;font-weight:700}
+    .result{padding:10px;border-radius:8px;background:var(--glass);margin-bottom:10px}
+    .good{color:var(--good)}.bad{color:var(--bad)}.warn{color:var(--warn)}.legendary{color:var(--legendary)}
+    .footer{margin-top:12px;color:var(--muted);font-size:12px}
+    .hidden{display:none!important}
+    body.modal-open{overflow:hidden}
+    .panel{margin:0;max-width:none}
+    .flow-overlay{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(2,6,23,0.76);backdrop-filter:blur(7px)}
+    .flow-modal{width:min(760px,100%);max-height:calc(100vh - 40px);overflow:auto;border-radius:14px;background:linear-gradient(180deg,#0b1220,#071022);box-shadow:0 24px 80px rgba(0,0,0,0.65),inset 0 1px 0 rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08)}
+    .modal-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.02);position:sticky;top:0;z-index:1}
+    .modal-header h3{margin:2px 0 0 0;font-size:18px}
+    .modal-eyebrow{font-size:12px;color:var(--muted)}
+    .modal-body{padding:14px}
+    .modal-body .card{box-shadow:none;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.025)}
+    .icon-button{width:auto;min-width:36px;height:36px;padding:0;border-radius:999px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);color:var(--muted);font-size:22px;line-height:1;cursor:pointer}
+    .icon-button:hover{color:#e6eef6;background:rgba(255,255,255,0.10)}
+    .info{background:rgba(125,211,252,0.08);border:1px solid rgba(125,211,252,0.18);border-radius:8px;padding:10px;margin:6px 0;color:#cfeeff;font-size:13px}
+    .warning{background:rgba(245,158,11,0.09);border:1px solid rgba(245,158,11,0.25);border-radius:8px;padding:10px;margin:6px 0;color:#fbbf24;font-size:13px}
+    .danger{background:rgba(251,113,133,0.10);border:1px solid rgba(251,113,133,0.28);border-radius:8px;padding:10px;margin:6px 0;color:#fecdd3;font-size:13px}
+    .checkbox-row{display:flex;align-items:center;gap:8px;margin:8px 0}
+    .checkbox-row input[type="checkbox"]{width:auto}
+    .checkbox-row label{margin-bottom:0}
+    .material-display{background:rgba(255,255,255,0.02);border-radius:8px;padding:12px;margin:8px 0;text-align:center}
+    .material-display .rarity{font-size:17px;font-weight:800;margin-bottom:4px}
+    .material-display .description{font-size:12px;color:var(--muted)}
+    .gold-display{background:linear-gradient(45deg,rgba(251,191,36,0.10),rgba(245,158,11,0.08));border:1px solid rgba(251,191,36,0.30);border-radius:8px;padding:12px;margin:8px 0;text-align:center}
+    .gold-amount{font-size:20px;font-weight:800;color:#fbbf24}
+    .pill{display:inline-block;border-radius:999px;padding:2px 8px;background:rgba(255,255,255,0.06);font-size:12px;color:var(--muted);margin:2px}
+    .rarity-common{color:#9ca3af}
+    .rarity-uncommon{color:#34d399}
+    .rarity-rare{color:#60a5fa}
+    .rarity-very-rare{color:#a855f7}
+    .rarity-legendary{color:#fbbf24}
+    .compact-table td,.compact-table th{padding:5px 7px}
+    @media(max-width:950px){.grid{grid-template-columns:1fr}.row{flex-direction:column}.actions{flex-direction:column}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>🌿 Gathering & Harvesting Tool — d100 Balanced</h1>
+        <p class="lead">8 Stunden Suche • Ressourcenarten • feste Materialwerte • Tool-Bonus: primär +5 / sekundär +2 / kein Tool +0</p>
+      </div>
+    </header>
+
+    <div class="grid">
+      <section class="card">
+        <h3>Gathering Setup</h3>
+        <div class="controls">
+          <div>
+            <label>Ressource auswählen</label>
+            <select id="gatherType" onchange="updateGatherType()"></select>
+          </div>
+
+          <div>
+            <label>Terrain auswählen</label>
+            <select id="terrain" onchange="updatePreview()"></select>
+          </div>
+
+          <div>
+            <label>Tool-Unterstützung</label>
+            <select id="toolSupport" onchange="updatePreview()">
+              <option value="0">Kein passendes Tool (+0)</option>
+              <option value="2">Sekundäres Tool (+2)</option>
+              <option value="5">Primäres Tool (+5)</option>
+            </select>
+          </div>
+
+          <div id="typePreview" class="info"></div>
+          <div id="terrainPreview" class="info"></div>
+
+          <div class="actions">
+            <button class="primary" onclick="startGathering()">🌿 Start Gathering</button>
+            <button class="ghost" onclick="resetLog()">Log leeren</button>
+          </div>
+
+          <hr style="border:none;border-top:1px solid rgba(255,255,255,0.1);margin:12px 0">
+
+          <h4>Tool-Regel</h4>
+          <table class="compact-table">
+            <thead><tr><th>Tool-Support</th><th>Bonus</th></tr></thead>
+            <tbody>
+              <tr><td>Primäres Tool</td><td>+5</td></tr>
+              <tr><td>Sekundäres Tool</td><td>+2</td></tr>
+              <tr><td>Kein passendes Tool</td><td>+0</td></tr>
+            </tbody>
+          </table>
+
+          <h4>Materialwerte dieser Ressource</h4>
+          <div id="valueTable"></div>
+
+          <h4>Harvest-Qualität</h4>
+          <table class="compact-table">
+            <thead><tr><th>Ergebnis</th><th>Materialwert</th></tr></thead>
+            <tbody>
+              <tr><td>DC geschafft</td><td>100%</td></tr>
+              <tr><td>DC um 1–4 verfehlt</td><td>50%</td></tr>
+              <tr><td>DC um 5–9 verfehlt</td><td>25%</td></tr>
+              <tr><td>DC um 10+ verfehlt</td><td>0%</td></tr>
+              <tr><td>Natural 1</td><td>0% + Komplikation</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <aside class="card">
+        <h3>Gathering Log</h3>
+        <div id="result" class="result muted">Bereit für Gathering...</div>
+        <div class="log" id="log"></div>
+        <div class="footer">8 Stunden pro Versuch • Crafting nutzt Materialwert • Verkauf nutzt den angezeigten Verkaufswert</div>
+      </aside>
+    </div>
+
+    <div id="flowPanels" class="hidden flow-overlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="flow-modal">
+        <div class="modal-header">
+          <div>
+            <div class="modal-eyebrow">8 Stunden Downtime • ein Gathering-Versuch</div>
+            <h3 id="modalTitle">Gathering</h3>
+          </div>
+          <button class="icon-button" onclick="cancelFlow()" aria-label="Modal schließen">×</button>
+        </div>
+        <div class="modal-body">
+          <div id="searchPanel" class="hidden card panel">
+            <h4>📝 Schritt 1 — Ressource finden</h4>
+            <div id="searchInfo" class="muted" style="margin-bottom:10px"></div>
+            <div class="row">
+              <div>
+                <label id="searchRollLabel">Suchwurf</label>
+                <input id="searchRoll" type="number" min="1" max="80" placeholder="d20 + Skill-Modifikator, ohne Tool-Bonus">
+              </div>
+            </div>
+            <div id="searchToolInfo" class="info"></div>
+            <div class="actions" style="margin-top:8px">
+              <button class="success" onclick="evaluateSearch()">🔍 Suchen</button>
+              <button class="ghost" onclick="cancelFlow()">Abbrechen</button>
+            </div>
+          </div>
+
+          <div id="harvestPanel" class="hidden card panel">
+            <h4>✂️ Schritt 2 — Ressource harvesten</h4>
+            <div id="materialDisplay" class="material-display"></div>
+            <div id="harvestInfo" class="muted" style="margin-bottom:10px"></div>
+            <div class="row">
+              <div>
+                <label id="harvestRollLabel">Harvest-Wurf</label>
+                <input id="harvestRoll" type="number" min="1" max="80" placeholder="d20 + Skill-Modifikator, ohne Tool-Bonus">
+              </div>
+            </div>
+            <div id="harvestToolInfo" class="info"></div>
+            <div class="checkbox-row">
+              <input type="checkbox" id="harvestNat1">
+              <label for="harvestNat1">Natural 1 beim Harvest: Ressource zerstört + Komplikation</label>
+            </div>
+            <div class="actions" style="margin-top:8px">
+              <button class="success" onclick="evaluateHarvest()">✂️ Harvesten</button>
+              <button class="ghost" onclick="cancelFlow()">Abbrechen</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const RARITY_ORDER = ['Common', 'Uncommon', 'Rare', 'Very Rare', 'Legendary'];
+const RARITY_META = {
+  Common: { className: 'rarity-common', harvestDC: 10 },
+  Uncommon: { className: 'rarity-uncommon', harvestDC: 15 },
+  Rare: { className: 'rarity-rare', harvestDC: 20 },
+  'Very Rare': { className: 'rarity-very-rare', harvestDC: 25 },
+  Legendary: { className: 'rarity-legendary', harvestDC: 30 }
+};
+
+const TABLES = {
+  herbal: {
+    forest:    [[1,60,'Common'],[61,88,'Uncommon'],[89,97,'Rare'],[98,99,'Very Rare'],[100,100,'Legendary']],
+    swamp:     [[1,65,'Common'],[66,90,'Uncommon'],[91,98,'Rare'],[99,99,'Very Rare'],[100,100,'Legendary']],
+    grassland: [[1,65,'Common'],[66,90,'Uncommon'],[91,98,'Rare'],[99,99,'Very Rare'],[100,100,'Legendary']],
+    coastal:   [[1,70,'Common'],[71,92,'Uncommon'],[93,98,'Rare'],[99,99,'Very Rare'],[100,100,'Legendary']],
+    hill:      [[1,60,'Common'],[61,88,'Uncommon'],[89,97,'Rare'],[98,99,'Very Rare'],[100,100,'Legendary']],
+    mountain:  [[1,50,'Common'],[51,80,'Uncommon'],[81,95,'Rare'],[96,99,'Very Rare'],[100,100,'Legendary']],
+    underdark: [[1,45,'Common'],[46,78,'Uncommon'],[79,94,'Rare'],[95,99,'Very Rare'],[100,100,'Legendary']],
+    urban:     [[1,75,'Common'],[76,95,'Uncommon'],[96,99,'Rare'],[100,100,'Very Rare']],
+    arctic:    [[1,45,'Common'],[46,75,'Uncommon'],[76,92,'Rare'],[93,99,'Very Rare'],[100,100,'Legendary']],
+    desert:    [[1,35,'Common'],[36,70,'Uncommon'],[71,90,'Rare'],[91,99,'Very Rare'],[100,100,'Legendary']],
+    underwater:[[1,50,'Common'],[51,82,'Uncommon'],[83,96,'Rare'],[97,99,'Very Rare'],[100,100,'Legendary']]
+  },
+  toxic: {
+    forest:    [[1,55,'Common'],[56,85,'Uncommon'],[86,96,'Rare'],[97,99,'Very Rare'],[100,100,'Legendary']],
+    swamp:     [[1,45,'Common'],[46,78,'Uncommon'],[79,94,'Rare'],[95,99,'Very Rare'],[100,100,'Legendary']],
+    grassland: [[1,65,'Common'],[66,90,'Uncommon'],[91,98,'Rare'],[99,99,'Very Rare'],[100,100,'Legendary']],
+    coastal:   [[1,60,'Common'],[61,88,'Uncommon'],[89,97,'Rare'],[98,99,'Very Rare'],[100,100,'Legendary']],
+    hill:      [[1,60,'Common'],[61,88,'Uncommon'],[89,97,'Rare'],[98,99,'Very Rare'],[100,100,'Legendary']],
+    mountain:  [[1,70,'Common'],[71,92,'Uncommon'],[93,98,'Rare'],[99,99,'Very Rare'],[100,100,'Legendary']],
+    underdark: [[1,35,'Common'],[36,70,'Uncommon'],[71,90,'Rare'],[91,99,'Very Rare'],[100,100,'Legendary']],
+    urban:     [[1,70,'Common'],[71,92,'Uncommon'],[93,98,'Rare'],[99,100,'Very Rare']],
+    arctic:    [[1,75,'Common'],[76,94,'Uncommon'],[95,99,'Rare'],[100,100,'Very Rare']],
+    desert:    [[1,45,'Common'],[46,78,'Uncommon'],[79,94,'Rare'],[95,99,'Very Rare'],[100,100,'Legendary']],
+    underwater:[[1,50,'Common'],[51,82,'Uncommon'],[83,96,'Rare'],[97,99,'Very Rare'],[100,100,'Legendary']]
+  },
+  brewing: {
+    forest:    [[1,70,'Common'],[71,92,'Uncommon'],[93,98,'Rare'],[99,99,'Very Rare'],[100,100,'Legendary']],
+    swamp:     [[1,75,'Common'],[76,94,'Uncommon'],[95,99,'Rare'],[100,100,'Very Rare']],
+    grassland: [[1,65,'Common'],[66,90,'Uncommon'],[91,98,'Rare'],[99,99,'Very Rare'],[100,100,'Legendary']],
+    coastal:   [[1,70,'Common'],[71,92,'Uncommon'],[93,98,'Rare'],[99,99,'Very Rare'],[100,100,'Legendary']],
+    hill:      [[1,65,'Common'],[66,90,'Uncommon'],[91,98,'Rare'],[99,99,'Very Rare'],[100,100,'Legendary']],
+    mountain:  [[1,80,'Common'],[81,95,'Uncommon'],[96,99,'Rare'],[100,100,'Very Rare']],
+    underdark: [[1,70,'Common'],[71,90,'Uncommon'],[91,98,'Rare'],[99,100,'Very Rare']],
+    urban:     [[1,75,'Common'],[76,95,'Uncommon'],[96,99,'Rare'],[100,100,'Very Rare']],
+    arctic:    [[1,85,'Common'],[86,97,'Uncommon'],[98,100,'Rare']],
+    desert:    [[1,80,'Common'],[81,95,'Uncommon'],[96,99,'Rare'],[100,100,'Very Rare']],
+    underwater:[[1,70,'Common'],[71,90,'Uncommon'],[91,98,'Rare'],[99,100,'Very Rare']]
+  },
+  pigment: {
+    forest:    [[1,70,'Common'],[71,92,'Uncommon'],[93,98,'Rare'],[99,99,'Very Rare'],[100,100,'Legendary']],
+    swamp:     [[1,50,'Common'],[51,82,'Uncommon'],[83,96,'Rare'],[97,99,'Very Rare'],[100,100,'Legendary']],
+    grassland: [[1,75,'Common'],[76,95,'Uncommon'],[96,99,'Rare'],[100,100,'Very Rare']],
+    coastal:   [[1,55,'Common'],[56,85,'Uncommon'],[86,96,'Rare'],[97,99,'Very Rare'],[100,100,'Legendary']],
+    hill:      [[1,75,'Common'],[76,95,'Uncommon'],[96,99,'Rare'],[100,100,'Very Rare']],
+    mountain:  [[1,45,'Common'],[46,78,'Uncommon'],[79,94,'Rare'],[95,99,'Very Rare'],[100,100,'Legendary']],
+    underdark: [[1,35,'Common'],[36,70,'Uncommon'],[71,90,'Rare'],[91,99,'Very Rare'],[100,100,'Legendary']],
+    urban:     [[1,70,'Common'],[71,92,'Uncommon'],[93,98,'Rare'],[99,100,'Very Rare']],
+    arctic:    [[1,75,'Common'],[76,94,'Uncommon'],[95,99,'Rare'],[100,100,'Very Rare']],
+    desert:    [[1,45,'Common'],[46,78,'Uncommon'],[79,94,'Rare'],[95,99,'Very Rare'],[100,100,'Legendary']],
+    underwater:[[1,50,'Common'],[51,82,'Uncommon'],[83,96,'Rare'],[97,99,'Very Rare'],[100,100,'Legendary']]
+  },
+  wood: {
+    forest:    [[1,60,'Common'],[61,88,'Uncommon'],[89,97,'Rare'],[98,99,'Very Rare'],[100,100,'Legendary']],
+    swamp:     [[1,60,'Common'],[61,88,'Uncommon'],[89,97,'Rare'],[98,99,'Very Rare'],[100,100,'Legendary']],
+    grassland: [[1,80,'Common'],[81,95,'Uncommon'],[96,99,'Rare'],[100,100,'Very Rare']],
+    coastal:   [[1,75,'Common'],[76,94,'Uncommon'],[95,99,'Rare'],[100,100,'Very Rare']],
+    hill:      [[1,70,'Common'],[71,92,'Uncommon'],[93,98,'Rare'],[99,99,'Very Rare'],[100,100,'Legendary']],
+    mountain:  [[1,65,'Common'],[66,90,'Uncommon'],[91,98,'Rare'],[99,99,'Very Rare'],[100,100,'Legendary']],
+    underdark: [[1,45,'Common'],[46,78,'Uncommon'],[79,94,'Rare'],[95,99,'Very Rare'],[100,100,'Legendary']],
+    urban:     [[1,80,'Common'],[81,95,'Uncommon'],[96,99,'Rare'],[100,100,'Very Rare']],
+    arctic:    [[1,70,'Common'],[71,90,'Uncommon'],[91,98,'Rare'],[99,100,'Very Rare']],
+    desert:    [[1,60,'Common'],[61,85,'Uncommon'],[86,96,'Rare'],[97,99,'Very Rare'],[100,100,'Legendary']],
+    underwater:[[1,80,'Common'],[81,95,'Uncommon'],[96,99,'Rare'],[100,100,'Very Rare']]
+  }
+};
+
+const TERRAIN_NAMES = {
+  forest: 'Forest',
+  swamp: 'Swamp',
+  grassland: 'Grassland',
+  coastal: 'Coastal',
+  hill: 'Hill',
+  mountain: 'Mountain',
+  underdark: 'Underdark',
+  urban: 'Urban',
+  arctic: 'Arctic',
+  desert: 'Desert',
+  underwater: 'Underwater'
+};
+
+const SEARCH_DCS = {
+  herbal: { forest:10, swamp:10, grassland:15, coastal:15, hill:15, mountain:20, underdark:20, urban:20, arctic:25, desert:25, underwater:15 },
+  toxic: { forest:15, swamp:10, grassland:15, coastal:15, hill:15, mountain:20, underdark:10, urban:20, arctic:25, desert:20, underwater:20 },
+  brewing: { forest:10, swamp:15, grassland:10, coastal:15, hill:15, mountain:20, underdark:20, urban:15, arctic:25, desert:25, underwater:20 },
+  pigment: { forest:15, swamp:10, grassland:20, coastal:15, hill:20, mountain:15, underdark:10, urban:15, arctic:25, desert:15, underwater:15 },
+  wood: { forest:10, swamp:15, grassland:20, coastal:20, hill:15, mountain:20, underdark:20, urban:25, arctic:25, desert:25, underwater:25 }
+};
+
+const GATHER_TYPES = {
+  herbal: {
+    label: 'Herbal Foraging', icon: '🌿', resourceName: 'Herbs',
+    checks: 'Nature / Survival / Medicine',
+    primaryTools: 'Herbalism Kit',
+    secondaryTools: 'Alchemist’s Supplies, Poisoner’s Kit',
+    saleRate: 0.5,
+    values: { Common:5, Uncommon:15, Rare:50, 'Very Rare':150, Legendary:500 },
+    descriptions: {
+      Common:'Einfache Heil- oder Nutzkräuter für grundlegende Trank- und Medizinherstellung.',
+      Uncommon:'Brauchbare Kräuter mit klar erkennbarem alchemistischem oder medizinischem Wert.',
+      Rare:'Kostbare Kräuter, stark genug für ernsthafte Trankherstellung.',
+      'Very Rare':'Außergewöhnlich potente Pflanzenbestandteile mit hoher magischer oder medizinischer Kraft.',
+      Legendary:'Ein legendärer Pflanzenfund. Wertvoll, empfindlich und nicht planbar.'
+    }
+  },
+  toxic: {
+    label: 'Toxic Foraging', icon: '☠️', resourceName: 'Toxins & Venoms',
+    checks: 'Nature / Survival / Medicine',
+    primaryTools: 'Poisoner’s Kit',
+    secondaryTools: 'Herbalism Kit, Alchemist’s Supplies',
+    saleRate: 0.5,
+    values: { Common:5, Uncommon:20, Rare:75, 'Very Rare':250, Legendary:750 },
+    toxicRisk: true,
+    descriptions: {
+      Common:'Schwache toxische Pflanzenbestandteile, Pilze oder Reizstoffe.',
+      Uncommon:'Nutzbare Giftbestandteile, Venom-Reste oder stark wirkende toxische Extrakte.',
+      Rare:'Gefährliche Toxine oder seltene Drüsensekrete mit echtem Crafting-Wert.',
+      'Very Rare':'Sehr gefährliche, instabile oder schwer sicher zu konservierende Toxine.',
+      Legendary:'Ein extrem seltener toxischer Fund. Potent, teuer und bei Fehlern gefährlich.'
+    }
+  },
+  brewing: {
+    label: 'Brewing Ingredients', icon: '🍺', resourceName: 'Brewing Ingredients',
+    checks: 'Nature / Survival',
+    primaryTools: 'Brewer’s Supplies',
+    secondaryTools: 'Cook’s Utensils, Herbalism Kit',
+    saleRate: 0.5,
+    values: { Common:2, Uncommon:8, Rare:25, 'Very Rare':75, Legendary:200 },
+    descriptions: {
+      Common:'Einfache Brauzutaten wie Hopfen, wilde Früchte, Wurzeln oder Hefequellen.',
+      Uncommon:'Gute Zutaten mit erkennbarem Aroma- oder Qualitätsvorteil.',
+      Rare:'Seltene Brauzutaten für besondere Ansätze, Met, Wein oder Spezialgetränke.',
+      'Very Rare':'Außergewöhnliche Zutaten mit deutlichem Handwerks- und Handelswert.',
+      Legendary:'Ein einmaliger Brau-Fund, geeignet für einen legendären Ansatz.'
+    }
+  },
+  pigment: {
+    label: 'Pigments & Ink', icon: '🖋️', resourceName: 'Pigments & Ink',
+    checks: 'Nature / Arcana',
+    primaryTools: 'Painter’s Supplies, Calligrapher’s Supplies',
+    secondaryTools: 'Alchemist’s Supplies, Herbalism Kit, Jeweler’s Tools',
+    saleRate: 0.5,
+    values: { Common:5, Uncommon:15, Rare:50, 'Very Rare':150, Legendary:500 },
+    descriptions: {
+      Common:'Einfache Pigmente, Ruß, Ocker, Pflanzensaft oder Tintenbasis.',
+      Uncommon:'Gute Pigmente oder Tintenbestandteile mit klarer handwerklicher Qualität.',
+      Rare:'Seltene mineralische, pflanzliche oder magisch reaktive Farb- und Tintenstoffe.',
+      'Very Rare':'Außergewöhnlich reine oder arcane Pigmente und Tintenbestandteile.',
+      Legendary:'Ein legendärer Farb- oder Tintenfund von außergewöhnlicher Qualität.'
+    }
+  },
+  wood: {
+    label: 'Wood & Resin', icon: '🪵', resourceName: 'Wood & Resin',
+    checks: 'Nature / Survival',
+    primaryTools: 'Woodcarver’s Tools, Carpenter’s Tools',
+    secondaryTools: 'Herbalism Kit',
+    saleRate: 0.5,
+    values: { Common:5, Uncommon:15, Rare:50, 'Very Rare':150, Legendary:500 },
+    descriptions: {
+      Common:'Einfaches Schnitzholz, Rinde, Harz oder brauchbare kleine Holzbestandteile.',
+      Uncommon:'Gutes Werkholz, Harzknollen oder Material für einfache Foki und Handwerk.',
+      Rare:'Seltenes Stab-, Bogen-, Fokus- oder Harzmaterial.',
+      'Very Rare':'Außergewöhnliches Herzholz, Harz oder magisch auffälliges Holzmaterial.',
+      Legendary:'Ein legendärer Holz- oder Harzfund. Extrem selten und handwerklich wertvoll.'
+    }
+  }
+};
+
+let currentSession = null;
+
+function $(id){ return document.getElementById(id); }
+function rnd(n){ return Math.floor(Math.random() * n) + 1; }
+function fmtGp(value){
+  if (Number.isInteger(value)) return `${value} gp`;
+  return `${Number(value.toFixed(2))} gp`;
+}
+function log(msg){
+  const l = $('log');
+  l.textContent = `${new Date().toLocaleTimeString()} — ${msg}\n` + l.textContent;
+}
+function getToolBonus(){ return parseInt($('toolSupport').value, 10) || 0; }
+function getToolLabel(bonus){
+  if (bonus >= 5) return 'Primäres Tool (+5)';
+  if (bonus >= 2) return 'Sekundäres Tool (+2)';
+  return 'Kein passendes Tool (+0)';
+}
+function getCurrentType(){ return GATHER_TYPES[$('gatherType').value]; }
+function getCurrentTypeKey(){ return $('gatherType').value; }
+function getCurrentTerrainKey(){ return $('terrain').value; }
+function getCurrentTerrainDc(){ return SEARCH_DCS[getCurrentTypeKey()][getCurrentTerrainKey()]; }
+function getCurrentRarityTable(){ return TABLES[getCurrentTypeKey()][getCurrentTerrainKey()]; }
+
+function rangeLabel(min, max){
+  const a = String(min).padStart(2, '0');
+  const b = String(max).padStart(2, '0');
+  return min === max ? a : `${a}–${b}`;
+}
+function tableToHtml(table){
+  return table.map(row => {
+    const [min, max, rarityName] = row;
+    const meta = RARITY_META[rarityName];
+    return `<span class="pill"><strong>${rangeLabel(min, max)}</strong> <span class="${meta.className}">${rarityName}</span></span>`;
+  }).join(' ');
+}
+function valueTableHtml(type){
+  const rows = RARITY_ORDER
+    .filter(rarity => Object.prototype.hasOwnProperty.call(type.values, rarity))
+    .map(rarity => {
+      const meta = RARITY_META[rarity];
+      const value = type.values[rarity];
+      return `<tr><td class="${meta.className}">${rarity}</td><td>${meta.harvestDC}</td><td>${fmtGp(value)}</td><td>${fmtGp(value * type.saleRate)}</td></tr>`;
+    }).join('');
+  return `<table class="compact-table"><thead><tr><th>Rarity</th><th>Harvest DC</th><th>Materialwert</th><th>Verkauf</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+function terrainOptionsHtml(typeKey){
+  return Object.keys(TABLES[typeKey]).map(key => {
+    const dc = SEARCH_DCS[typeKey][key];
+    return `<option value="${key}">${TERRAIN_NAMES[key]} (DC ${dc})</option>`;
+  }).join('');
+}
+function allTerrainTablesHtml(typeKey){
+  return Object.keys(TABLES[typeKey]).map(key => {
+    const dc = SEARCH_DCS[typeKey][key];
+    return `<tr><td>${TERRAIN_NAMES[key]}</td><td>${dc}</td><td>${tableToHtml(TABLES[typeKey][key])}</td></tr>`;
+  }).join('');
+}
+
+function updateGatherType(){
+  const typeKey = getCurrentTypeKey();
+  const previousTerrain = $('terrain').value;
+  $('terrain').innerHTML = terrainOptionsHtml(typeKey);
+  if (TABLES[typeKey][previousTerrain]) $('terrain').value = previousTerrain;
+  updatePreview();
+}
+function updatePreview(){
+  const typeKey = getCurrentTypeKey();
+  const type = getCurrentType();
+  const terrainKey = getCurrentTerrainKey();
+  const terrainName = TERRAIN_NAMES[terrainKey];
+  const dc = getCurrentTerrainDc();
+  const toolBonus = getToolBonus();
+  const table = getCurrentRarityTable();
+
+  $('typePreview').innerHTML = `
+    <strong>${type.icon} ${type.label}</strong><br>
+    <strong>Checks:</strong> ${type.checks}<br>
+    <strong>Primär:</strong> ${type.primaryTools}<br>
+    <strong>Sekundär:</strong> ${type.secondaryTools || '—'}<br>
+    <strong>Aktiver Tool-Bonus:</strong> ${getToolLabel(toolBonus)}
+    ${type.toxicRisk ? '<div class="danger" style="margin-top:8px"><strong>Risiko:</strong> Toxic Foraging kann bei schlechtem Harvest Poison Exposure auslösen.</div>' : ''}
+  `;
+
+  $('terrainPreview').innerHTML = `
+    <strong>${terrainName}</strong> — Such-DC ${dc}<br>
+    <span class="small">d100-Rarität für ${type.label}:</span><br>${tableToHtml(table)}
+    <details style="margin-top:8px">
+      <summary class="small" style="cursor:pointer">Alle Gebietstabellen für diese Ressource anzeigen</summary>
+      <table class="compact-table"><thead><tr><th>Gebiet</th><th>DC</th><th>d100-Rarität</th></tr></thead><tbody>${allTerrainTablesHtml(typeKey)}</tbody></table>
+    </details>
+  `;
+
+  $('valueTable').innerHTML = valueTableHtml(type);
+}
+function showPanel(id){
+  hideAllPanels(false);
+  const type = getCurrentType();
+  const titles = {
+    searchPanel: `Schritt 1 — ${type.resourceName} finden`,
+    harvestPanel: `Schritt 2 — ${type.resourceName} harvesten`
+  };
+  $('modalTitle').textContent = titles[id] || 'Gathering';
+  $('flowPanels').classList.remove('hidden');
+  document.body.classList.add('modal-open');
+  $(id).classList.remove('hidden');
+}
+function hideAllPanels(hideFlow = true){
+  if (hideFlow) {
+    $('flowPanels').classList.add('hidden');
+    document.body.classList.remove('modal-open');
+  }
+  ['searchPanel','harvestPanel'].forEach(id => $(id).classList.add('hidden'));
+}
+function cancelFlow(){
+  hideAllPanels(true);
+  $('result').textContent = 'Gathering abgebrochen.';
+  currentSession = null;
+}
+function getRarityFromD100(table, roll){
+  const entry = table.find(row => roll >= row[0] && roll <= row[1]);
+  const rarityName = entry[2];
+  return { name: rarityName, ...RARITY_META[rarityName] };
+}
+function harvestQuality(finalRoll, needed, nat1){
+  if (nat1) {
+    return { label: 'Natural 1 — zerstört + Komplikation', multiplier: 0, className: 'bad', miss: Infinity };
+  }
+  if (finalRoll >= needed) {
+    return { label: 'Sauber geharvestet', multiplier: 1, className: 'good', miss: 0 };
+  }
+  const miss = needed - finalRoll;
+  if (miss <= 4) {
+    return { label: 'Beschädigt — halber Wert', multiplier: 0.5, className: 'warn', miss };
+  }
+  if (miss <= 9) {
+    return { label: 'Stark beschädigt — 25% Wert', multiplier: 0.25, className: 'warn', miss };
+  }
+  return { label: 'Zerstört / wertlos', multiplier: 0, className: 'bad', miss };
+}
+function toxicExposureHtml(rarity, quality, nat1){
+  if (!currentSession.type.toxicRisk) return '';
+  if (!nat1 && quality.miss < 5) return '';
+  const saveDcByRarity = { Common:10, Uncommon:12, Rare:15, 'Very Rare':17, Legendary:20 };
+  const damageByRarity = { Common:'1d6', Uncommon:'1d6', Rare:'2d6', 'Very Rare':'3d6', Legendary:'4d6' };
+  const dc = saveDcByRarity[rarity.name];
+  const damage = damageByRarity[rarity.name];
+  return `<div class="danger"><strong>Poison Exposure:</strong> CON Save DC ${dc}. Bei Fail: poisoned für 1 Stunde. Bei Fail by 5+: zusätzlich ${damage} poison damage. DM kann bei sicherer Schutzausrüstung abmildern.</div>`;
+}
+
+function startGathering(){
+  const typeKey = getCurrentTypeKey();
+  const type = getCurrentType();
+  const terrainKey = getCurrentTerrainKey();
+  const terrainName = TERRAIN_NAMES[terrainKey];
+  const terrainDc = getCurrentTerrainDc();
+  const table = getCurrentRarityTable();
+  const toolBonus = getToolBonus();
+
+  currentSession = { typeKey, type, terrainKey, terrainName, terrainDc, table, toolBonus };
+  $('searchRoll').value = '';
+  $('harvestRoll').value = '';
+  $('harvestNat1').checked = false;
+
+  log(`${type.icon} Gathering gestartet: ${type.label} in ${terrainName} (8 Stunden, Such-DC ${terrainDc}, ${getToolLabel(toolBonus)})`);
+  $('result').innerHTML = `<strong>Schritt 1:</strong> ${type.resourceName} suchen in ${terrainName}`;
+  $('searchRollLabel').textContent = `Suchwurf: ${type.checks}`;
+  $('harvestRollLabel').textContent = `Harvest-Wurf: ${type.checks}`;
+  $('searchToolInfo').innerHTML = `<strong>Tool-Bonus:</strong> ${getToolLabel(toolBonus)}. Trage den Skill-Wurf ohne diesen Tool-Bonus ein; die App addiert ihn automatisch.`;
+  $('harvestToolInfo').innerHTML = `<strong>Tool-Bonus:</strong> ${getToolLabel(toolBonus)}. Trage den Skill-Wurf ohne diesen Tool-Bonus ein; die App addiert ihn automatisch.`;
+  $('searchInfo').innerHTML = `
+    <strong>Ressource:</strong> ${type.label}<br>
+    <strong>Terrain:</strong> ${terrainName}<br>
+    <strong>Such-DC:</strong> ${terrainDc}<br>
+    <strong>Zeit:</strong> 8 Stunden / ein Workday<br>
+    <strong>Erlaubte Checks:</strong> ${type.checks}<br><br>
+    Bei Erfolg wird auf der d100-Gebietstabelle dieser Ressource gewürfelt.
+  `;
+  showPanel('searchPanel');
+  $('searchRoll').focus();
+}
+function evaluateSearch(){
+  const roll = parseInt($('searchRoll').value, 10);
+  if (!Number.isFinite(roll) || roll < 1) {
+    alert('Bitte gib einen gültigen Suchwurf ein.');
+    return;
+  }
+  const finalRoll = roll + currentSession.toolBonus;
+  const needed = currentSession.terrainDc;
+  log(`🎲 Suchwurf: ${roll}${currentSession.toolBonus ? '+' + currentSession.toolBonus + ' Tool' : ''} = ${finalRoll} gegen DC ${needed}`);
+
+  if (finalRoll < needed) {
+    $('result').innerHTML = `<span class="bad">❌ Keine brauchbaren ${currentSession.type.resourceName} gefunden.</span>`;
+    log(`❌ Suche fehlgeschlagen — keine verwertbaren ${currentSession.type.resourceName} gefunden.`);
+    hideAllPanels(true);
+    currentSession = null;
+    return;
+  }
+
+  const d100 = rnd(100);
+  const rarity = getRarityFromD100(currentSession.table, d100);
+  const baseValue = currentSession.type.values[rarity.name];
+  currentSession.rarity = rarity;
+  currentSession.rarityRoll = d100;
+  currentSession.baseValue = baseValue;
+
+  $('harvestRoll').value = '';
+  $('harvestNat1').checked = false;
+
+  log(`✅ Suche erfolgreich. d100-Rarität: ${d100} → ${rarity.name}`);
+  $('result').innerHTML = `<span class="good">✅ ${currentSession.type.resourceName} gefunden!</span> <span class="${rarity.className}">${rarity.name}</span>`;
+  $('materialDisplay').innerHTML = `
+    <div class="rarity ${rarity.className}">${rarity.name} ${currentSession.type.resourceName}</div>
+    <div class="description">${currentSession.type.descriptions[rarity.name]}</div>
+  `;
+  $('harvestInfo').innerHTML = `
+    <strong>Rarity-Wurf:</strong> d100 = ${d100}<br>
+    <strong>Rarity:</strong> <span class="${rarity.className}">${rarity.name}</span><br>
+    <strong>Harvest DC:</strong> ${rarity.harvestDC}<br>
+    <strong>Basis-Materialwert:</strong> ${fmtGp(baseValue)}<br>
+    <strong>Regulärer Verkauf:</strong> ${fmtGp(baseValue * currentSession.type.saleRate)}<br><br>
+    Jetzt entscheidet der Harvest-Wurf, wie viel vom Materialwert wirklich nutzbar bleibt.
+  `;
+  showPanel('harvestPanel');
+  $('harvestRoll').focus();
+}
+function evaluateHarvest(){
+  const roll = parseInt($('harvestRoll').value, 10);
+  if (!Number.isFinite(roll) || roll < 1) {
+    alert('Bitte gib einen gültigen Harvest-Wurf ein.');
+    return;
+  }
+  const nat1 = $('harvestNat1').checked;
+  const finalRoll = roll + currentSession.toolBonus;
+  const rarity = currentSession.rarity;
+  const quality = harvestQuality(finalRoll, rarity.harvestDC, nat1);
+  const materialValue = currentSession.baseValue * quality.multiplier;
+  const saleValue = materialValue * currentSession.type.saleRate;
+  const exposure = toxicExposureHtml(rarity, quality, nat1);
+
+  log(`🎲 Harvest-Wurf: ${roll}${currentSession.toolBonus ? '+' + currentSession.toolBonus + ' Tool' : ''} = ${finalRoll} gegen DC ${rarity.harvestDC}${nat1 ? ' (Natural 1)' : ''}`);
+  log(`✂️ Harvest-Ergebnis: ${quality.label}`);
+  if (exposure) log('☠️ Poison Exposure ausgelöst.');
+  log(`💰 Final: ${fmtGp(materialValue)} Materialwert / ${fmtGp(saleValue)} Verkauf`);
+  log(`📊 Session: ${currentSession.type.label} / ${currentSession.terrainName} → d100 ${currentSession.rarityRoll} → ${rarity.name} → ${quality.multiplier * 100}% Wert`);
+
+  const complication = nat1 ? `<div class="warning"><strong>Komplikation:</strong> Die Ressource wurde zerstört. Optional: Werkzeug beschädigt, Material kontaminiert, Sporenwolke, Dornenverletzung, auffällige Spuren oder Kreatur angelockt.</div>` : '';
+
+  $('result').innerHTML = `
+    <div class="gold-display">
+      <div class="gold-amount">${currentSession.type.icon} ${fmtGp(materialValue)} Materialwert</div>
+      <div style="margin-top:8px;color:var(--muted)">
+        <span class="${rarity.className}">${rarity.name} ${currentSession.type.resourceName}</span><br>
+        Verkaufspreis: <strong>${fmtGp(saleValue)}</strong><br>
+        Harvest: <span class="${quality.className}">${quality.label}</span>
+      </div>
+    </div>
+    ${exposure}
+    ${complication}
+  `;
+
+  hideAllPanels(true);
+  currentSession = null;
+}
+function resetLog(){
+  $('log').textContent = '';
+  $('result').textContent = 'Log geleert. Bereit für neues Gathering...';
+  hideAllPanels(true);
+  currentSession = null;
+}
+function initialize(){
+  $('gatherType').innerHTML = Object.keys(GATHER_TYPES).map(key => {
+    const type = GATHER_TYPES[key];
+    return `<option value="${key}">${type.icon} ${type.label}</option>`;
+  }).join('');
+  updateGatherType();
+  log('🌿 Gathering & Harvesting Tool d100 Balanced geladen. Bereit.');
+}
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && !$('flowPanels').classList.contains('hidden')) {
+    cancelFlow();
+  }
+});
+initialize();
+</script>
+</body>
+</html>
